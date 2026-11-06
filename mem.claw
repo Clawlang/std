@@ -1,5 +1,7 @@
+# std module for handling heap memory.
+
 # Interface for allocating memory to the heap
-pub type Allocator = struct {
+type Allocator = struct {
   # Allocates a slice of type `T` with len `count`.
   # @Throws `std.err.OutOfMemory` error.
   fn |self| alloc(T: type, count: usize) T[]*;
@@ -37,15 +39,32 @@ pub fn VTable(Interface: type) type {
 # from an input interface.
 comptime fn VTableLayout(Interface: type) type {
   var layout = struct {};
-  var fields = std.comptime.Field[Interface.methods.len];
+  var fields = std.compile.Field[Interface.methods.len];
 
-  for(layout.methods, 0..) |method, i| {
+  for(Interface.methods, 0..) |method, i| {
     fields[i] = .{
       .name = method.name;
-      .type = method.type;
+      .type = std.compile.OpaqueCapture(method.type);
     };
   }
 
   layout.fields = fields;
   return layout;
+}
+
+# Private function for generating VTable layout instances 
+# from an input interface.
+comptime fn CreateVTable(InterfaceType: type, InstanceType: type) VTableLayout(InterfaceType)* {
+  if(!(InstanceType is InterfaceType)) {
+    throw error{ .msg = "Instance type does not conform to interface type" };
+  }
+
+  var table: VTableLayout(InterfaceType);
+
+  for(InterfaceType.methods) |method| {
+    const func = std.compile.getFunction(InstanceType, method.name);
+    std.compile.setField(&table, method.name, func);
+  }
+
+  return &table;
 }
