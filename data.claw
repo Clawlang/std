@@ -4,7 +4,7 @@ import build;
 
 # Generic Arraylist type.
 # Alias of `T[]` but is dynamically resizable.
-pub fn Arraylist(T: type) type {
+pub comptime fn Arraylist(T: type) type {
   return alias T[] {
     allocator: alias std.mem.Allocator,
     capacity: usize,
