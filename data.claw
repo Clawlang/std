@@ -75,12 +75,53 @@ pub fn Arraylist(T: type) type {
       if(index >= self.len) throw std.error.indexOutOfBounds;
 
       const ret = self[index];
-      for(self[index + 1..self.len], 0..) |cur, i| { //shift items
-        self[index + i] = cur;
+      for(self[index + 1..self.len], ..) |cur, i| { //shift items
+        self[index - 1] = cur;
       }
       self.len -= 1;
 
       return ret;
+    }
+
+    # Checks if the list contains `item`.
+    # Handles `std.interface.Comparable` as well as comparable primitives.
+    pub fn |self| contains(item: T) bool {
+      comptime if(T is std.interface.Comparable) {
+        for(self[0..self.len]) |cur| {
+          if(cur.equals(item)) return true;
+        }
+      } else {
+        for(self[0..self.len]) |cur| {
+          if(cur == item) return true;
+        }
+      }
+
+      return false;
+    }
+
+    # Finds `item` in the list.
+    # Handles `std.interface.Comparable` as well as comparable primitives.
+    # @returns index of item or null if the list does not contain it.
+    pub fn |self| find(item: T) usize? {
+      comptime if(T is std.interface.Comparable) {
+        for(self[0..self.len], ..) |cur, i| {
+          if(cur.equals(item)) return i;
+        }
+      } else {
+        for(self[0..self.len], ..) |cur, i| {
+          if(cur == item) return i;
+        }
+      }
+
+      return null;
+    }
+
+    # Returns the last item in the list
+    # Shorthand for list[list.len - 1]
+    # @throws `Empty List` if list is empty
+    pub fn |self| last() T {
+      if(self.len == 0) throw error{ .msg = "Empty List" };
+      return self[self.len - 1];
     }
   };
 }
